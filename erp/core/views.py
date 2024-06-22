@@ -9,13 +9,11 @@ from .filters import (
 
 from .models import (
     Brand, Category, Company, Partner,
-    Product, ProductVariant, ProductImage, UnitOfMeasure,
-    VariantOption, VariantValue,
+    Product, UnitOfMeasure,
 )
 from .serializers import (
     BrandSerializer, CategorySerializer, CompanySerializer, PartnerSerializer,
-    ProductSerializer, ProductVariantSerializer,
-    ProductImageSerializer, UnitOfMeasureSerializer, VariantOptionSerializer, VariantValueSerializer,
+    ProductSerializer, ProductListSerializer, UnitOfMeasureSerializer,
 )
 
 
@@ -66,22 +64,7 @@ class ProductViewSet(BaseModelViewSet):
     serializer_class = ProductSerializer
     filterset_class = ProductFilter
 
-
-class ProductVariantViewSet(BaseModelViewSet):
-    queryset = ProductVariant.objects.all().order_by('-id')
-    serializer_class = ProductVariantSerializer
-
-
-class ProductImageViewSet(BaseModelViewSet):
-    queryset = ProductImage.objects.all().order_by('-id')
-    serializer_class = ProductImageSerializer
-
-
-class VariantOptionViewSet(BaseModelViewSet):
-    queryset = VariantOption.objects.all().order_by('-id')
-    serializer_class = VariantOptionSerializer
-
-
-class VariantValueViewSet(BaseModelViewSet):
-    queryset = VariantValue.objects.all().order_by('-id')
-    serializer_class = VariantValueSerializer
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ProductListSerializer
+        return ProductSerializer

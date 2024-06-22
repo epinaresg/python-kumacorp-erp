@@ -69,7 +69,7 @@ class Product(TimeStampedModel, SoftDeleteModel):
     minimum_sale_unit = models.DecimalField(max_digits=10, decimal_places=3, verbose_name="Minimum Sale Unit")
     minimum_unit_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Minimum Unit Price")
     stock_quantity = models.IntegerField(verbose_name="Stock Quantity", default=0)
-    has_variant = models.BooleanField(default=False, verbose_name="Has Variant")
+    has_variants = models.BooleanField(default=False, verbose_name="Has Variant")
 
     def __str__(self):
         return self.name
@@ -86,7 +86,7 @@ class ProductVariant(TimeStampedModel, SoftDeleteModel):
     product = models.ForeignKey(Product, related_name='variants', on_delete=models.CASCADE, verbose_name="Product")
     sku = models.CharField(max_length=50, null=True, blank=True, verbose_name="SKU")
     barcode = models.CharField(max_length=50, null=True, blank=True, verbose_name="Barcode")
-    name = models.CharField(max_length=255, verbose_name="Name")
+    name = models.CharField(max_length=255, db_index=True, verbose_name="Name")
     cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Cost")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Price")
     stock_quantity = models.IntegerField(verbose_name="Stock Quantity")
@@ -105,7 +105,7 @@ class VariantOption(TimeStampedModel, SoftDeleteModel):
     company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
     product = models.ForeignKey(Product, related_name='variant_options', on_delete=models.CASCADE, verbose_name="Product")
-    name = models.CharField(max_length=255, verbose_name="Name")
+    name = models.CharField(max_length=255, db_index=True, verbose_name="Name")
 
     def __str__(self):
         return self.name
@@ -115,7 +115,7 @@ class VariantValue(TimeStampedModel, SoftDeleteModel):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
     product = models.ForeignKey(Product, related_name='variant_values', on_delete=models.CASCADE, verbose_name="Product")
     option = models.ForeignKey(VariantOption, related_name='values', on_delete=models.CASCADE, verbose_name="Variant Option")
-    value = models.CharField(max_length=255, verbose_name="Value")
+    value = models.CharField(max_length=255, db_index=True, verbose_name="Value")
 
     def __str__(self):
-        return self.name
+        return self.value

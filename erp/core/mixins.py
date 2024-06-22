@@ -41,7 +41,6 @@ class BaseModelSerializer(serializers.ModelSerializer):
         return None
 
     def validate_company(self):
-        print('validate_company')
         request = self.context.get('request')
         company_uuid = request.headers.get('X-Company-UUID')
         company = self.validate_uuid(company_uuid, Company)
@@ -70,6 +69,7 @@ class BaseModelSerializer(serializers.ModelSerializer):
             raise ValidationError(error_message)
 
     def create(self, validated_data):
+        print('CREATE 3')
         company = self.validate_company()
         validated_data['company'] = company
         self.validate_if_name_is_used(company, validated_data)

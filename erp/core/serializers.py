@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db import transaction
 
 from .mixins import (
     BaseListSerializer, BaseModelSerializer
@@ -8,6 +9,10 @@ from .models import (
     Partner, Category, Company, Brand, UnitOfMeasure,
     Product, ProductVariant, ProductImage,
     VariantOption, VariantValue
+)
+
+from .services import (
+    ProductVariantService
 )
 
 
@@ -64,19 +69,16 @@ class BrandSerializer(BaseListSerializer, BaseModelSerializer):
         fields = '__all__'
 
 
-
 class UnitOfMeasureSerializer(BaseListSerializer, BaseModelSerializer):
     class Meta:
         model = UnitOfMeasure
         fields = '__all__'
 
 
-
 class VariantValueSerializer(BaseListSerializer):
     class Meta:
         model = VariantValue
-        fields = '__all__'
-
+        fields = ['value']
 
 
 class VariantOptionSerializer(BaseListSerializer):
@@ -84,43 +86,82 @@ class VariantOptionSerializer(BaseListSerializer):
 
     class Meta:
         model = VariantOption
-        fields = '__all__'
+        fields = ['name', 'values']
 
 
+class ProductVariantSerializer(BaseListSerializer):
+    class Meta:
+        model = ProductVariant
+        fields = ['sku', 'name', 'cost', 'price']
 
-class ProductSerializer(BaseListSerializer, BaseModelSerializer):
-    unit_of_measure_uuid = serializers.UUIDField(write_only=True, required=False)
-    brand_uuid = serializers.UUIDField(write_only=True, required=False)
+class ProductListSerializer(BaseListSerializer):
     brand = BrandSerializer(read_only=True)
     unit_of_measure = UnitOfMeasureSerializer(read_only=True)
-    variants = VariantOptionSerializer(many=True, write_only=True)
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+class ProductSerializer(BaseModelSerializer):
+    unit_of_measure_uuid = serializers.UUIDField(write_only=True, required=False)
+    brand_uuid = serializers.UUIDField(write_only=True, required=False)
+    variant_options_data = VariantOptionSerializer(many=True, write_only=True, required=False)
+    product_variants_data = ProductVariantSerializer(many=True, write_only=True, required=False)
+
+    brand = BrandSerializer(read_only=True)
+    unit_of_measure = UnitOfMeasureSerializer(read_only=True)
+    product_variants = serializers.SerializerMethodField(read_only=True)
+    variant_options = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Product
         fields = '__all__'
 
-    def create(self, validated_data):
-        unit_of_measure = self.validate_uuid(validated_data.pop('unit_of_measure_uuid', None), UnitOfMeasure)
+    def set_custom_data(self, validated_data):
+        unit_of_measure_uuid = validated_data.pop('unit_of_measure_uuid', None)
+        brand_uuid = validated_data.pop('brand_uuid', None)
+
+        unit_of_measure = self.validate_uuid(unit_of_measure_uuid, UnitOfMeasure)
+        brand = self.validate_uuid(brand_uuid, Brand)
+
         validated_data['unit_of_measure'] = unit_of_measure
-        brand = self.validate_uuid(validated_data.pop('brand_uuid', None), Brand)
         validated_data['brand'] = brand
-        product = super().create(validated_data)
+        return validated_data
 
-        variants_data = validated_data.pop('variants', [])
-        for variant_data in variants_data:
-            values_data = variant_data.pop('values')
-            variant_option = VariantOption.objects.create(
-                product=product,
-                **variant_data)
-            for value_data in values_data:
-                VariantValue.objects.create(option=variant_option, **value_data)
+    def create(self, validated_data):
+        print('CREATE 1')
+        validated_data = self.set_custom_data(validated_data)
+        print('CREATE 2')
+        with transaction.atomic():
+            variant_options_data = validated_data.pop('variant_options_data', [])
+            product_variants_data = validated_data.pop('product_variants_data', [])
 
+            product = super().create(validated_data)
+
+            service = ProductVariantService()
+            product = service.create(product, variant_options_data)
+            service.set_product_variants_data(product, product_variants_data)
         return product
 
-class ProductVariantSerializer(BaseListSerializer):
-    class Meta:
-        model = ProductVariant
-        fields = '__all__'
+    def update(self, instance, validated_data):
+        validated_data = self.set_custom_data(validated_data)
+        with transaction.atomic():
+            variant_options_data = validated_data.pop('variant_options_data', [])
+            product_variants_data = validated_data.pop('product_variants_data', [])
+            product = super().update(instance, validated_data)
+            service = ProductVariantService()
+            service.create(product, variant_options_data)
+            service.set_product_variants_data(product, product_variants_data)
+        return product
+
+    def get_product_variants(self, instance):
+        variants = ProductVariant.objects.filter(product=instance)
+        serializer = ProductVariantSerializer(variants, many=True)
+        return serializer.data
+
+    def get_variant_options(self, instance):
+        options = VariantOption.objects.filter(product=instance)
+        serializer = VariantOptionSerializer(options, many=True)
+        return serializer.data
 
 class ProductImageSerializer(BaseListSerializer):
     class Meta:
