@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import UserSerializer
+from authentication.serializers import UserSerializer
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()

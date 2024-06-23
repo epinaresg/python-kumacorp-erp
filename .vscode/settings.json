@@ -1,0 +1,9 @@
+{
+  "terminal.integrated.profiles.osx": {
+    "fishProfile": {
+      "path": "/opt/homebrew/bin/fish",
+      "args": ["-C", "source ${workspaceFolder}/config.fish"]
+    }
+  },
+  "terminal.integrated.defaultProfile.osx": "fishProfile",
+}

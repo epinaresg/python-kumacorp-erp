@@ -1,107 +1,62 @@
 from rest_framework import serializers
-from django.db import transaction
+from PIL import Image as PilImage
 
-from .mixins import (
-    BaseListSerializer, BaseModelSerializer
-)
+from core.mixins import BaseSerializer
+from core.models import Partner, Category, Company, Brand, Image, Product, ProductVariant, ProductImage, UnitOfMeasure, VariantOption, VariantValue
 
-from .models import (
-    Partner, Category, Company, Brand, UnitOfMeasure,
-    Product, ProductVariant, ProductImage,
-    VariantOption, VariantValue
-)
-
-from .services import (
-    ProductVariantService
-)
-
-
-class CompanySerializer(BaseListSerializer):
+class CompanySerializer(BaseSerializer):
     class Meta:
         model = Company
         exclude = ['user']
 
-    def create(self, validated_data):
-        user = self.context['request'].user
-        try:
-            company = Company.objects.get(user=user)
-            if company:
-                raise serializers.ValidationError("Este usuario ya tiene asignada una compañía.")
-        except Company.DoesNotExist:
-            pass
-        validated_data['user'] = self.context['request'].user
-        return super().create(validated_data)
-
-
-
-class PartnerSerializer(BaseListSerializer, BaseModelSerializer):
+class PartnerSerializer(BaseSerializer):
     class Meta:
         model = Partner
         fields = '__all__'
 
-
-
-class CategorySerializer(BaseListSerializer, BaseModelSerializer):
+class CategorySerializer(BaseSerializer):
     parent_uuid = serializers.UUIDField(write_only=True, required=False)
 
     class Meta:
         model = Category
         exclude = ['parent']
 
-    def create(self, validated_data):
-        parent = self.validate_uuid(validated_data.pop('parent_uuid', None), Category)
-        if parent and parent.parent:
-            raise serializers.ValidationError("Una categoría no puede tener más de un nivel de padres.")
-        validated_data['parent'] = parent
-        return super().create(validated_data)
-
-    def update(self, instance, validated_data):
-        if 'parent_uuid' in validated_data:
-            raise serializers.ValidationError("No se permite actualizar el padre de una categoría.")
-
-        return super().update(instance, validated_data)
-
-
-
-class BrandSerializer(BaseListSerializer, BaseModelSerializer):
+class BrandSerializer(BaseSerializer):
     class Meta:
         model = Brand
         fields = '__all__'
 
-
-class UnitOfMeasureSerializer(BaseListSerializer, BaseModelSerializer):
+class UnitOfMeasureSerializer(BaseSerializer):
     class Meta:
         model = UnitOfMeasure
         fields = '__all__'
 
-
-class VariantValueSerializer(BaseListSerializer):
+class VariantValueSerializer(BaseSerializer):
     class Meta:
         model = VariantValue
         fields = ['value']
 
-
-class VariantOptionSerializer(BaseListSerializer):
+class VariantOptionSerializer(BaseSerializer):
     values = VariantValueSerializer(many=True)
 
     class Meta:
         model = VariantOption
         fields = ['name', 'values']
 
-
-class ProductVariantSerializer(BaseListSerializer):
+class ProductVariantSerializer(BaseSerializer):
     class Meta:
         model = ProductVariant
         fields = ['sku', 'name', 'cost', 'price']
 
-class ProductListSerializer(BaseListSerializer):
+class ProductListSerializer(BaseSerializer):
     brand = BrandSerializer(read_only=True)
     unit_of_measure = UnitOfMeasureSerializer(read_only=True)
+
     class Meta:
         model = Product
         fields = '__all__'
 
-class ProductSerializer(BaseModelSerializer):
+class ProductSerializer(BaseSerializer):
     unit_of_measure_uuid = serializers.UUIDField(write_only=True, required=False)
     brand_uuid = serializers.UUIDField(write_only=True, required=False)
     variant_options_data = VariantOptionSerializer(many=True, write_only=True, required=False)
@@ -116,54 +71,36 @@ class ProductSerializer(BaseModelSerializer):
         model = Product
         fields = '__all__'
 
-    def set_custom_data(self, validated_data):
-        unit_of_measure_uuid = validated_data.pop('unit_of_measure_uuid', None)
-        brand_uuid = validated_data.pop('brand_uuid', None)
-
-        unit_of_measure = self.validate_uuid(unit_of_measure_uuid, UnitOfMeasure)
-        brand = self.validate_uuid(brand_uuid, Brand)
-
-        validated_data['unit_of_measure'] = unit_of_measure
-        validated_data['brand'] = brand
-        return validated_data
-
-    def create(self, validated_data):
-        print('CREATE 1')
-        validated_data = self.set_custom_data(validated_data)
-        print('CREATE 2')
-        with transaction.atomic():
-            variant_options_data = validated_data.pop('variant_options_data', [])
-            product_variants_data = validated_data.pop('product_variants_data', [])
-
-            product = super().create(validated_data)
-
-            service = ProductVariantService()
-            product = service.create(product, variant_options_data)
-            service.set_product_variants_data(product, product_variants_data)
-        return product
-
-    def update(self, instance, validated_data):
-        validated_data = self.set_custom_data(validated_data)
-        with transaction.atomic():
-            variant_options_data = validated_data.pop('variant_options_data', [])
-            product_variants_data = validated_data.pop('product_variants_data', [])
-            product = super().update(instance, validated_data)
-            service = ProductVariantService()
-            service.create(product, variant_options_data)
-            service.set_product_variants_data(product, product_variants_data)
-        return product
-
     def get_product_variants(self, instance):
-        variants = ProductVariant.objects.filter(product=instance)
-        serializer = ProductVariantSerializer(variants, many=True)
-        return serializer.data
+        variants = instance.product_variants.all()
+        return ProductVariantSerializer(variants, many=True).data
 
     def get_variant_options(self, instance):
-        options = VariantOption.objects.filter(product=instance)
-        serializer = VariantOptionSerializer(options, many=True)
-        return serializer.data
+        options = instance.variant_options.all()
+        return VariantOptionSerializer(options, many=True).data
 
-class ProductImageSerializer(BaseListSerializer):
+class ProductImageSerializer(BaseSerializer):
     class Meta:
         model = ProductImage
         fields = '__all__'
+
+class ImageSerializer(BaseSerializer):
+    class Meta:
+        model = Image
+        fields = '__all__'
+
+    def validate_image(self, value):
+        valid_image_formats = ['JPEG', 'PNG']
+        max_image_size = 2 * 1024 * 1024
+
+        try:
+            img = PilImage.open(value)
+            if img.format not in valid_image_formats:
+                raise serializers.ValidationError(f'Unsupported image format. Allowed formats are: {", ".join(valid_image_formats)}.')
+        except Exception as e:
+            raise serializers.ValidationError(f'Error processing image: {str(e)}')
+
+        if value.size > max_image_size:
+            raise serializers.ValidationError(f'Image size exceeds the limit of {max_image_size / (1024 * 1024)}MB.')
+
+        return value

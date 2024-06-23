@@ -1,21 +1,12 @@
+from rest_framework import viewsets, mixins, status
+from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 
-from rest_framework.exceptions import PermissionDenied
-
-from .mixins import BaseModelViewSet
-
-from .filters import (
-    BrandFilter, CategoryFilter, PartnerFilter, ProductFilter, UnitOfMeasureFilter,
-)
-
-from .models import (
-    Brand, Category, Company, Partner,
-    Product, UnitOfMeasure,
-)
-from .serializers import (
-    BrandSerializer, CategorySerializer, CompanySerializer, PartnerSerializer,
-    ProductSerializer, ProductListSerializer, UnitOfMeasureSerializer,
-)
-
+from core.mixins import BaseModelViewSet
+from core.filters import BrandFilter, CategoryFilter, PartnerFilter, ProductFilter, UnitOfMeasureFilter
+from core.models import Brand, Category, Company, Partner, Product, UnitOfMeasure
+from core.serializers import BrandSerializer, CategorySerializer, CompanySerializer, ImageSerializer, PartnerSerializer, ProductSerializer, ProductListSerializer, UnitOfMeasureSerializer
+from core.services import CategoryService, CompanyService, ProductService
 
 class CompanyViewSet(BaseModelViewSet):
     queryset = Company.objects.all().order_by('-id')
@@ -23,41 +14,52 @@ class CompanyViewSet(BaseModelViewSet):
     def get_queryset(self):
         return Company.objects.filter(user=self.request.user)
 
-    def perform_update(self, serializer):
-        instance = self.get_object()
-        if instance.user != self.request.user:
-            raise PermissionDenied("No tienes permiso para editar este registro.")
-        serializer.save()
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        CompanyService.create(user=self.request.user, serializer=serializer)
 
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class PartnerViewSet(BaseModelViewSet):
     queryset = Partner.objects.all().order_by('-id')
     serializer_class = PartnerSerializer
     filterset_class = PartnerFilter
 
-
 class CategoryViewSet(BaseModelViewSet):
     queryset = Category.objects.all().order_by('-id')
     serializer_class = CategorySerializer
     filterset_class = CategoryFilter
+
     def get_queryset(self):
         queryset = super().get_queryset()
         if self.action in ['list']:
             return queryset.filter(parent__isnull=True)
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        category_service = CategoryService()
+        category_service.create(company=self.get_company(), serializer=serializer)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=kwargs.get('partial', False))
+        category_service = CategoryService()
+        category_service.update(serializer=serializer)
+
+        return Response(serializer.data)
 
 class BrandViewSet(BaseModelViewSet):
     queryset = Brand.objects.all().order_by('-id')
     serializer_class = BrandSerializer
     filterset_class = BrandFilter
 
-
 class UnitOfMeasureViewSet(BaseModelViewSet):
     queryset = UnitOfMeasure.objects.all().order_by('-id')
     serializer_class = UnitOfMeasureSerializer
     filterset_class = UnitOfMeasureFilter
-
 
 class ProductViewSet(BaseModelViewSet):
     queryset = Product.objects.all().order_by('-id')
@@ -68,3 +70,26 @@ class ProductViewSet(BaseModelViewSet):
         if self.action == 'list':
             return ProductListSerializer
         return ProductSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.select_related('brand', 'unit_of_measure')
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        product_service = ProductService()
+        product_service.create(company=self.get_company(), serializer=serializer)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=kwargs.get('partial', False))
+        product_service = ProductService()
+        product_service.update(serializer=serializer)
+
+        return Response(serializer.data)
+
+class ImageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    parser_classes = (MultiPartParser, FormParser)
+    serializer_class = ImageSerializer

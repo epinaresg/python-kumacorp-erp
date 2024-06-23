@@ -83,7 +83,7 @@ class ProductCategory(TimeStampedModel, SoftDeleteModel):
 class ProductVariant(TimeStampedModel, SoftDeleteModel):
     company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
-    product = models.ForeignKey(Product, related_name='variants', on_delete=models.CASCADE, verbose_name="Product")
+    product = models.ForeignKey(Product, related_name='product_variants', on_delete=models.CASCADE, verbose_name="Product")
     sku = models.CharField(max_length=50, null=True, blank=True, verbose_name="SKU")
     barcode = models.CharField(max_length=50, null=True, blank=True, verbose_name="Barcode")
     name = models.CharField(max_length=255, db_index=True, verbose_name="Name")
@@ -94,10 +94,16 @@ class ProductVariant(TimeStampedModel, SoftDeleteModel):
     def __str__(self):
         return self.name
 
+class Image(TimeStampedModel, SoftDeleteModel):
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
+    image = models.ImageField(upload_to='images/', verbose_name="Image")
+    in_use = models.BooleanField(default=False, verbose_name="In Use")
+
 class ProductImage(TimeStampedModel, SoftDeleteModel):
     company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
-    image = models.ImageField(upload_to='product_images/', verbose_name="Image")
+    image = models.ForeignKey(Image, related_name='images', on_delete=models.CASCADE, verbose_name="Image")
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE, verbose_name="Product")
     product_variant = models.ForeignKey(ProductVariant, related_name='images', on_delete=models.CASCADE, null=True, blank=True, verbose_name="Product Variant")
 

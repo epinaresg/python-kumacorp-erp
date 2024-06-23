@@ -6,18 +6,16 @@
     "configurations": [
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-            "pythonPath": "${workspaceFolder}/venv/Scripts/python.exe", // path to your virtual environment's python
-            "program": "${workspaceFolder}/erp/manage.py",
+            "python": "/Users/epinaresg/Documents/Projects/python/kumacorp/erp_project/venv/bin/python3.12", // path to your virtual environment's python
+            "program": "/Users/epinaresg/Documents/Projects/python/kumacorp/erp_project/erp/manage.py",
             "args": [
                 "runserver",
+                "--noreload",
+                "--nothreading",
                 "8000", // or any other port you wish to use
             ],
-            "env": {
-                "PYTHONUNBUFFERED": "1",
-                "TEST_ENV": "This is test ENV."
-            },
             "console": "integratedTerminal",
             "justMyCode": true
         }
