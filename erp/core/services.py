@@ -8,14 +8,12 @@ from rest_framework.exceptions import ValidationError
 from core.models import Brand, Category, Company, Product, ProductVariant, VariantOption, VariantValue, UnitOfMeasure
 
 class UtilService:
-    @staticmethod
     def validate_uuid(uuid:str, model_class):
         if uuid:
             instance = get_object_or_404(model_class, uuid=uuid)
             return instance
         return None
 
-    @staticmethod
     def validate_if_name_is_used(action, validated_data, model_class, instance=None):
         if model_class == Category and 'parent' in validated_data and isinstance(validated_data['parent'], Category):
             name = validated_data['name']
@@ -34,7 +32,6 @@ class UtilService:
             raise ValidationError(error_message)
 
 class CompanyService:
-    @staticmethod
     def create(*, user: User, serializer):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
@@ -47,8 +44,7 @@ class CompanyService:
         return serializer.save()
 
 class CategoryService:
-    @staticmethod
-    def create(self, *, company: Company, serializer):
+    def create(*, company: Company, serializer):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
@@ -61,8 +57,7 @@ class CategoryService:
         UtilService.validate_if_name_is_used('create', validated_data, Category)
         return serializer.save()
 
-    @staticmethod
-    def update(self, *, serializer):
+    def update(*, serializer):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 

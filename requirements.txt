@@ -1,4 +1,8 @@
 asgiref==3.8.1
+attrs==23.2.0
+certifi==2024.6.2
+charset-normalizer==3.3.2
+cloudflare==2.20.0
 distlib==0.3.8
 Django==4.2.13
 django-extensions==3.2.3
@@ -7,12 +11,17 @@ django-soft-delete==1.0.13
 djangorestframework==3.15.1
 djangorestframework-simplejwt==5.3.1
 filelock==3.15.4
+idna==3.7
+jsonlines==4.0.0
 pillow==10.3.0
 platformdirs==4.2.2
 psycopg2-binary==2.9.9
 PyJWT==2.8.0
 python-dotenv==1.0.1
+PyYAML==6.0.1
+requests==2.32.3
 six==1.16.0
 sqlparse==0.5.0
 typing_extensions==4.12.2
+urllib3==2.2.2
 virtualenv==20.26.3

@@ -6,7 +6,7 @@ from core.mixins import BaseModelViewSet
 from core.filters import BrandFilter, CategoryFilter, PartnerFilter, ProductFilter, UnitOfMeasureFilter
 from core.models import Brand, Category, Company, Partner, Product, UnitOfMeasure
 from core.serializers import BrandSerializer, CategorySerializer, CompanySerializer, ImageSerializer, PartnerSerializer, ProductSerializer, ProductListSerializer, UnitOfMeasureSerializer
-from core.services import CategoryService, CompanyService, ProductService
+from core.services import CategoryService, CompanyService, ProductService, UtilService
 
 class CompanyViewSet(BaseModelViewSet):
     queryset = Company.objects.all().order_by('-id')
@@ -38,16 +38,14 @@ class CategoryViewSet(BaseModelViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        category_service = CategoryService()
-        category_service.create(company=self.get_company(), serializer=serializer)
+        CategoryService.create(company=self.get_company(), serializer=serializer)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=kwargs.get('partial', False))
-        category_service = CategoryService()
-        category_service.update(serializer=serializer)
+        CategoryService.update(serializer=serializer)
 
         return Response(serializer.data)
 
@@ -93,3 +91,16 @@ class ProductViewSet(BaseModelViewSet):
 class ImageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = ImageSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        company_uuid = self.request.headers.get('X-Company-UUID')
+
+        validated_data = serializer.validated_data
+        validated_data['company'] = UtilService.validate_uuid(company_uuid, Company)
+
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
