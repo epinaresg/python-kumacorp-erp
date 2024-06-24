@@ -1,12 +1,12 @@
 from django.db import models
 from django_extensions.db.models import TimeStampedModel
 from django_softdelete.models import SoftDeleteModel
-from django.contrib.auth.models import User
+from django.conf import settings
 import uuid
 
 class Company(TimeStampedModel, SoftDeleteModel):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, verbose_name="UUID")
-    user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name="User")
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="User")
     name = models.CharField(max_length=255, verbose_name="Name")
     settings = models.JSONField(default=dict, verbose_name="Settings")
 
@@ -14,7 +14,7 @@ class Company(TimeStampedModel, SoftDeleteModel):
         return self.name
 
 class Partner(TimeStampedModel, SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, verbose_name="Company", related_name='partners')
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
     is_customer = models.BooleanField(default=False, verbose_name="Is Customer")
     is_supplier = models.BooleanField(default=False, verbose_name="Is Supplier")
@@ -28,7 +28,7 @@ class Partner(TimeStampedModel, SoftDeleteModel):
         return self.name
 
 class Category(TimeStampedModel, SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, verbose_name="Company", related_name='categories')
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
     name = models.CharField(max_length=255, verbose_name="Name")
     description = models.TextField(null=True, blank=True, verbose_name="Description")
@@ -38,7 +38,7 @@ class Category(TimeStampedModel, SoftDeleteModel):
         return self.name
 
 class Brand(TimeStampedModel, SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, verbose_name="Company", related_name='brands')
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
     name = models.CharField(max_length=255, verbose_name="Name")
     description = models.TextField(null=True, blank=True, verbose_name="Description")
@@ -47,7 +47,7 @@ class Brand(TimeStampedModel, SoftDeleteModel):
         return self.name
 
 class UnitOfMeasure(TimeStampedModel, SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, verbose_name="Company", related_name='units_of_measure')
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
     name = models.CharField(max_length=255, verbose_name="Name")
     abbreviation = models.CharField(max_length=10, verbose_name="Abbreviation")
@@ -56,10 +56,10 @@ class UnitOfMeasure(TimeStampedModel, SoftDeleteModel):
         return self.name
 
 class Product(TimeStampedModel, SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, verbose_name="Company", related_name='products')
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
-    brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="Brand")
-    unit_of_measure = models.ForeignKey(UnitOfMeasure, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="Unit of Measure")
+    brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="Brand", related_name='products')
+    unit_of_measure = models.ForeignKey(UnitOfMeasure, on_delete=models.SET_NULL, null=True, blank=False, verbose_name="Unit of Measure", related_name='products')
     sku = models.CharField(max_length=50, null=True, blank=True, verbose_name="SKU")
     barcode = models.CharField(max_length=50, null=True, blank=True, verbose_name="Barcode")
     name = models.CharField(max_length=255, verbose_name="Name")
@@ -75,15 +75,15 @@ class Product(TimeStampedModel, SoftDeleteModel):
         return self.name
 
 class ProductCategory(TimeStampedModel, SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, verbose_name="Company", related_name='product_categories')
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Category")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Product")
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Category", related_name='product_categories')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Product", related_name='product_categories')
 
 class ProductVariant(TimeStampedModel, SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, verbose_name="Company", related_name='product_variants')
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
-    product = models.ForeignKey(Product, related_name='product_variants', on_delete=models.CASCADE, verbose_name="Product")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Product", related_name='product_variants')
     sku = models.CharField(max_length=50, null=True, blank=True, verbose_name="SKU")
     barcode = models.CharField(max_length=50, null=True, blank=True, verbose_name="Barcode")
     name = models.CharField(max_length=255, db_index=True, verbose_name="Name")
@@ -95,32 +95,32 @@ class ProductVariant(TimeStampedModel, SoftDeleteModel):
         return self.name
 
 class Image(TimeStampedModel, SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, verbose_name="Company", related_name='images')
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
-    image = models.ImageField(upload_to='images/', verbose_name="Image")
+    url = models.ImageField(upload_to='images/', verbose_name="Image")
     in_use = models.BooleanField(default=False, verbose_name="In Use")
 
 class ProductImage(TimeStampedModel, SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, verbose_name="Company", related_name='product_images')
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
-    image = models.ForeignKey(Image, related_name='images', on_delete=models.CASCADE, verbose_name="Image")
-    product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE, verbose_name="Product")
-    product_variant = models.ForeignKey(ProductVariant, related_name='images', on_delete=models.CASCADE, null=True, blank=True, verbose_name="Product Variant")
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, verbose_name="Image", related_name='product_images')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Product", related_name='product_images')
+    product_variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Product Variant", related_name='product_images')
 
 class VariantOption(TimeStampedModel, SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, verbose_name="Company", related_name='variant_options')
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
-    product = models.ForeignKey(Product, related_name='variant_options', on_delete=models.CASCADE, verbose_name="Product")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Product", related_name='variant_options')
     name = models.CharField(max_length=255, db_index=True, verbose_name="Name")
 
     def __str__(self):
         return self.name
 
 class VariantValue(TimeStampedModel, SoftDeleteModel):
-    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, blank=False, null=False, verbose_name="Company")
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, verbose_name="Company", related_name='variant_values')
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, verbose_name="UUID")
-    product = models.ForeignKey(Product, related_name='variant_values', on_delete=models.CASCADE, verbose_name="Product")
-    option = models.ForeignKey(VariantOption, related_name='values', on_delete=models.CASCADE, verbose_name="Variant Option")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Product", related_name='variant_values')
+    option = models.ForeignKey(VariantOption, on_delete=models.CASCADE, verbose_name="Variant Option", related_name='variant_values')
     value = models.CharField(max_length=255, db_index=True, verbose_name="Value")
 
     def __str__(self):

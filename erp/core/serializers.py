@@ -2,7 +2,7 @@ from rest_framework import serializers
 from PIL import Image as PilImage
 
 from core.mixins import BaseSerializer
-from core.models import Partner, Category, Company, Brand, Image, Product, ProductVariant, ProductImage, UnitOfMeasure, VariantOption, VariantValue
+from core.models import Partner, Category, Company, Brand, Image, Product, UnitOfMeasure
 
 class CompanySerializer(BaseSerializer):
     class Meta:
@@ -31,58 +31,7 @@ class UnitOfMeasureSerializer(BaseSerializer):
         model = UnitOfMeasure
         fields = '__all__'
 
-class VariantValueSerializer(BaseSerializer):
-    class Meta:
-        model = VariantValue
-        fields = ['value']
-
-class VariantOptionSerializer(BaseSerializer):
-    values = VariantValueSerializer(many=True)
-
-    class Meta:
-        model = VariantOption
-        fields = ['name', 'values']
-
-class ProductVariantSerializer(BaseSerializer):
-    class Meta:
-        model = ProductVariant
-        fields = ['sku', 'name', 'cost', 'price']
-
-class ProductListSerializer(BaseSerializer):
-    brand = BrandSerializer(read_only=True)
-    unit_of_measure = UnitOfMeasureSerializer(read_only=True)
-
-    class Meta:
-        model = Product
-        fields = '__all__'
-
-class ProductSerializer(BaseSerializer):
-    unit_of_measure_uuid = serializers.UUIDField(write_only=True, required=False)
-    brand_uuid = serializers.UUIDField(write_only=True, required=False)
-    variant_options_data = VariantOptionSerializer(many=True, write_only=True, required=False)
-    product_variants_data = ProductVariantSerializer(many=True, write_only=True, required=False)
-
-    brand = BrandSerializer(read_only=True)
-    unit_of_measure = UnitOfMeasureSerializer(read_only=True)
-    product_variants = serializers.SerializerMethodField(read_only=True)
-    variant_options = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = Product
-        fields = '__all__'
-
-    def get_product_variants(self, instance):
-        variants = instance.product_variants.all()
-        return ProductVariantSerializer(variants, many=True).data
-
-    def get_variant_options(self, instance):
-        options = instance.variant_options.all()
-        return VariantOptionSerializer(options, many=True).data
-
-class ProductImageSerializer(BaseSerializer):
-    class Meta:
-        model = ProductImage
-        fields = '__all__'
+### BEGIN - IMAGE ###
 
 class ImageSerializer(BaseSerializer):
     class Meta:
@@ -104,3 +53,78 @@ class ImageSerializer(BaseSerializer):
             raise serializers.ValidationError(f'Image size exceeds the limit of {max_image_size / (1024 * 1024)}MB.')
 
         return value
+
+### END - IMAGE ###
+
+### BEGIN - PRODUCT ###
+
+class ProductListSerializer(BaseSerializer):
+    brand = BrandSerializer(read_only=True)
+    unit_of_measure = UnitOfMeasureSerializer(read_only=True)
+
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+class VariantOptionSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    values = serializers.ListField(
+        child=serializers.CharField()
+    )
+
+class ProductImageSerializer(serializers.Serializer):
+    url = serializers.CharField(read_only=True)
+
+class ImageListSerializer(serializers.ListField):
+    child = serializers.UUIDField()
+
+class ProductVariantSerializer(serializers.Serializer):
+    sku = serializers.CharField()
+    name = serializers.CharField()
+    cost = serializers.DecimalField(max_digits=10, decimal_places=2)
+    price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    images_data = ImageListSerializer(write_only=True, required=False)
+
+class ProductSerializer(BaseSerializer):
+    unit_of_measure_uuid = serializers.UUIDField(write_only=True, required=False)
+    brand_uuid = serializers.UUIDField(write_only=True, required=False)
+    variant_options_data = VariantOptionSerializer(many=True, write_only=True, required=False)
+    product_variants_data = ProductVariantSerializer(many=True, write_only=True, required=False)
+    images_data = serializers.ListField(child=serializers.UUIDField(), write_only=True, required=False)
+
+    brand = BrandSerializer(read_only=True)
+    unit_of_measure = UnitOfMeasureSerializer(read_only=True)
+    product_variants = serializers.SerializerMethodField(read_only=True)
+    variant_options = serializers.SerializerMethodField(read_only=True)
+    product_images = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+    def get_product_variants(self, instance):
+        product_variants = instance.product_variants.all()
+        return ProductVariantSerializer(product_variants, many=True).data
+
+    def get_variant_options(self, instance):
+        variant_options = instance.variant_options.all()
+        data = []
+        for variant_option in variant_options:
+            option_data = {
+                "name": variant_option.name,
+                "values": variant_option.variant_values.values_list('value', flat=True)
+            }
+            data.append(option_data)
+        return VariantOptionSerializer(data, many=True).data
+
+    def get_product_images(self, instance):
+        product_images = instance.product_images.all()
+        data = []
+        for product_image in product_images:
+            image_data = {
+                "url": product_image.image.url
+            }
+            data.append(image_data)
+        return ProductImageSerializer(data, many=True).data
+
+### END - PRODUCT ###

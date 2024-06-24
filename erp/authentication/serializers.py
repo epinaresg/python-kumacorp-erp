@@ -1,15 +1,13 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as JwtTokenObtainPairSerializer
+
+
+class TokenObtainPairSerializer(JwtTokenObtainPairSerializer):
+    username_field = get_user_model().USERNAME_FIELD
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ['username', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def create(self, validated_data):
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            password=validated_data['password']
-        )
-        return user
+        model = get_user_model()
+        fields = ('email', 'password')

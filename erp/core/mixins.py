@@ -14,12 +14,12 @@ class BaseModelViewSet(viewsets.ModelViewSet):
 
     def get_company(self):
         company_uuid = self.request.headers.get('X-Company-UUID')
-        company = UtilService.validate_uuid(company_uuid, Company)
+        company = UtilService.validate_uuid(uuid=company_uuid, model_class=Company)
         return company
 
     def get_queryset(self):
         company_uuid = self.request.headers.get('X-Company-UUID')
-        company = UtilService.validate_uuid(company_uuid, Company)
+        company = UtilService.validate_uuid(uuid=company_uuid, model_class=Company)
         return self.queryset.filter(company=company)
 
     def create(self, request, *args, **kwargs):

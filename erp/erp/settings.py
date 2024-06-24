@@ -156,3 +156,7 @@ SIMPLE_JWT = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = 'media/'
+
+AUTH_USER_MODEL = 'authentication.CustomUser'
+
+AUTHENTICATION_BACKENDS = ['authentication.backend.EmailBackend']
