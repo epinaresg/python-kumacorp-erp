@@ -3,7 +3,14 @@
     "fishProfile": {
       "path": "/opt/homebrew/bin/fish",
       "args": ["-C", "source ${workspaceFolder}/config.fish"]
-    }
+    },
   },
   "terminal.integrated.defaultProfile.osx": "fishProfile",
+  "terminal.integrated.profiles.linux": {
+    "fishProfile": {
+      "path": "/home/linuxbrew/.linuxbrew/bin/fish",
+      "args": ["-C", "source ${workspaceFolder}/config.fish"]
+    },
+  },
+  "terminal.integrated.defaultProfile.linux": "fishProfile",
 }
