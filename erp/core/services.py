@@ -43,6 +43,12 @@ class CompanyService:
 
         return serializer.save()
 
+    def update(*, serializer):
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        return serializer.save()
+
 class CategoryService:
     def create(*, company: Company, serializer):
         serializer.is_valid(raise_exception=True)

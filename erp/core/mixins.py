@@ -1,5 +1,7 @@
-from rest_framework import viewsets, permissions, serializers, status
+
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, permissions, serializers, status
 from rest_framework.response import Response
 
 from core.pagination import BasePagination
@@ -14,12 +16,12 @@ class BaseModelViewSet(viewsets.ModelViewSet):
 
     def get_company(self):
         company_uuid = self.request.headers.get('X-Company-UUID')
-        company = UtilService.validate_uuid(uuid=company_uuid, model_class=Company)
+        company = get_object_or_404(Company, uuid=company_uuid, user=self.request.user)
         return company
 
     def get_queryset(self):
         company_uuid = self.request.headers.get('X-Company-UUID')
-        company = UtilService.validate_uuid(uuid=company_uuid, model_class=Company)
+        company = get_object_or_404(Company, uuid=company_uuid, user=self.request.user)
         return self.queryset.filter(company=company)
 
     def create(self, request, *args, **kwargs):
