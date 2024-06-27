@@ -1,16 +1,18 @@
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from itertools import product as itertools_product
-from rest_framework import serializers
+from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
 
 from core.models import Brand, Category, Company, Image, Product, ProductImage, ProductVariant, VariantOption, VariantValue, UnitOfMeasure
 
 class UtilService:
     def validate_uuid(*, uuid:str, model_class):
         if uuid:
-            instance = get_object_or_404(model_class, uuid=uuid)
+            instance = get_object_or_404(model_class=model_class, uuid=uuid)
             return instance
         return None
 
@@ -168,7 +170,7 @@ class ProductVariantService:
     @transaction.atomic
     def set_product_variants_data(self, *, product, product_variants_data):
         for product_variant_data in product_variants_data:
-            product_variant = get_object_or_404(ProductVariant, company=product.company, product=product, name=product_variant_data['name'])
+            product_variant = get_object_or_404(model_class=ProductVariant, company=product.company, product=product, name=product_variant_data['name'])
             product_variant.sku = product_variant_data['sku']
             product_variant.cost = product_variant_data['cost']
             product_variant.price = product_variant_data['price']

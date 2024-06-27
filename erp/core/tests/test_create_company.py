@@ -23,7 +23,7 @@ class CreateCompanyTestCase(APITestCase):
 
     def test_create_company_requires_authentication(self):
         response = self.client.post(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, "Expected 401 Unauthorized for unauthenticated company creation")
 
     def test_create_company_fails_without_field(self):
         for field in self.required_fields:
@@ -33,7 +33,7 @@ class CreateCompanyTestCase(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
             response = self.client.post(self.url, data, format='json')
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            self.assertIn(field, response.data)
+            self.assertIn(field, response.data, f"Missing '{field}' in response data for bad request")
 
     def test_create_company_fails_with_blank_field(self):
         for field in self.required_fields:
@@ -43,23 +43,24 @@ class CreateCompanyTestCase(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
             response = self.client.post(self.url, data, format='json')
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            self.assertIn(field, response.data)
+            self.assertIn(field, response.data, f"Missing '{field}' in response data for bad request")
 
     def test_create_company_succeeds_with_valid_data(self):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
         response = self.client.post(self.url, self.company_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, "Expected 201 Created for successful company creation")
 
         expected_fields = ['uuid', 'name', 'settings']
         for field in expected_fields:
-            self.assertIn(field, response.data)
+            self.assertIn(field, response.data, f"Expected '{field}' in response data")
 
         company = Company.objects.get(uuid=response.data['uuid'])
         self.assertIsNotNone(company)
-        self.assertTrue(
-            company.name == self.company_data['name'] and
-            company.name == response.data['name'] and
-            response.data['name'] == self.company_data['name']
+        self.assertEqual(
+            company.name, self.company_data['name'], "Expected company name to match input data"
+        )
+        self.assertEqual(
+            response.data['name'], self.company_data['name'], "Expected response name to match input data"
         )
 
     def test_create_company_fails_user_cannot_register_multiple_companies(self):
@@ -67,4 +68,4 @@ class CreateCompanyTestCase(APITestCase):
 
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
         response = self.client.post(self.url, self.company_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, "Expected 400 Bad Request for duplicate company creation")

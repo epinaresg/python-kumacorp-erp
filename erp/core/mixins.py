@@ -20,8 +20,7 @@ class BaseModelViewSet(viewsets.ModelViewSet):
         return company
 
     def get_queryset(self):
-        company_uuid = self.request.headers.get('X-Company-UUID')
-        company = get_object_or_404(Company, uuid=company_uuid, user=self.request.user)
+        company = self.get_company()
         return self.queryset.filter(company=company)
 
     def create(self, request, *args, **kwargs):
@@ -32,7 +31,7 @@ class BaseModelViewSet(viewsets.ModelViewSet):
         validated_data['company'] = self.get_company()
 
         model = self.serializer_class.Meta.model
-        UtilService.validate_if_name_is_used('create', validated_data, model)
+        UtilService.validate_if_name_is_used(action='create', validated_data=validated_data, model_class=model)
 
         serializer.save()
 
@@ -40,14 +39,14 @@ class BaseModelViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(instance, data=request.data, partial=kwargs.get('partial', False))
         serializer.is_valid(raise_exception=True)
 
         validated_data = serializer.validated_data
         validated_data['company'] = instance.company
 
         model = self.serializer_class.Meta.model
-        UtilService.validate_if_name_is_used('update', validated_data, model, instance)
+        UtilService.validate_if_name_is_used(action='update', validated_data=validated_data, model_class=model, instance=instance)
 
         serializer.save()
 
