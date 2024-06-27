@@ -1,21 +1,12 @@
-from rest_framework.test import APITestCase
 from rest_framework import status
+from rest_framework.reverse import reverse
 from authentication.models import CustomUser
 from core.models import Company
-from rest_framework.reverse import reverse
+from core.tests.base_test_case import BaseAPITestCase
 
-class OtherMethodsCompanyTestCase(APITestCase):
+class OtherMethodsCompanyTestCase(BaseAPITestCase):
     def setUp(self):
-        self.user_data = {
-            'email': 'testuser@gmail.com',
-            'password': 'testpassword'
-        }
-        self.url_get_token = reverse('token-obtain')
-        self.user = CustomUser.objects.create_user(**self.user_data)
-        response = self.client.post(self.url_get_token, self.user_data, format='json')
-        self.access_token = response.data['access']
-
-        self.company = Company.objects.create(user=self.user, name='Original Test company')
+        super().setUp()
 
         self.url_list = reverse('company-list')
         self.url_detail = reverse('company-detail', kwargs={'uuid': self.company.uuid})

@@ -8,8 +8,8 @@ from core.tests.base_test_case import BaseAPITestCase
 class UpdateBrandTestCase(BaseAPITestCase):
     def setUp(self):
         super().setUp()
-        self.brand = Brand.objects.create(company=self.company, name='Original Test brand')
-        self.other_brand = Brand.objects.create(company=self.other_company, name='Original Other Test brand')
+        self.brand = self.create_brand(company=self.company, name='Original Test brand')
+        self.other_brand = self.create_brand(company=self.other_company, name='Original Other Test brand')
 
         self.url = reverse('brand-detail', kwargs={'uuid': self.brand.uuid})
         self.brand_data = {
@@ -64,19 +64,21 @@ class UpdateBrandTestCase(BaseAPITestCase):
 
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}', HTTP_X_COMPANY_UUID=self.company.uuid)
         response = self.client.put(url, self.brand_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, "Expected 404 Not Found for brand UUID from another company")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, "Expected 404 Not Found for UUID from another company")
 
     def test_update_brand_succeeds_with_valid_data(self):
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}', HTTP_X_COMPANY_UUID=self.company.uuid)
         response = self.client.put(self.url, self.brand_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK, "Expected 200 OK for successful brand update")
+        self.assertEqual(response.status_code, status.HTTP_200_OK, "Expected 200 OK for successful update")
+
+        brand = Brand.objects.get(uuid=response.data['uuid'])
+        self.assertIsNotNone(brand, "Brand should exist in database")
 
         expected_fields = ['uuid', 'name']
         for field in expected_fields:
             self.assertIn(field, response.data, f"Field {field} missing in response data")
+            if (field != 'uuid'):
+                self.assertEqual(getattr(brand, field), self.brand_data[field], f"Expected updated {field} to match input data")
+                self.assertEqual(response.data[field], self.brand_data[field], f"Expected response data {field} to match input data")
 
-        brand = Brand.objects.get(uuid=response.data['uuid'])
-        self.assertIsNotNone(brand, "Brand should exist in database")
-        self.assertEqual(brand.name, self.brand_data['name'], "Expected updated brand name to match input data")
-        self.assertEqual(response.data['name'], self.brand_data['name'], "Expected response data name to match input data")
-        self.assertEqual(str(brand.uuid), str(self.brand.uuid), "Expected updated brand UUID to match original brand UUID")
+        self.assertEqual(str(brand.uuid), str(self.brand.uuid), "Expected updated UUID to match original UUID")
