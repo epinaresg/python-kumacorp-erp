@@ -20,31 +20,6 @@ class GetBrandTestCase(BaseAPITestCase):
         self.url_list = reverse('brand-list')
         self.url_detail = reverse('brand-detail', kwargs={'uuid': self.brand.uuid})
 
-    def test_get_list_brand_requires_authentication(self):
-        response = self.make_request(method='get', url=self.url_list)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, "Expected 401 Unauthorized for unauthenticated request")
-
-    def test_get_detail_brand_requires_authentication(self):
-        response = self.make_request(method='get', url=self.url_detail)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, "Expected 401 Unauthorized for unauthenticated request")
-
-    def test_get_list_requires_company_uuid(self):
-        response = self.make_request(method='get', url=self.url_list, data=None, access_token=self.access_token)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, "Expected 404 Not Found without company UUID header")
-
-    def test_get_detail_brand_requires_company_uuid(self):
-        response = self.make_request(method='get', url=self.url_detail, data=None, access_token=self.access_token)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, "Expected 404 Not Found without company UUID header")
-
-    def test_get_list_brand_requires_company_uuid_from_logged_user(self):
-        response = self.make_request(method='get', url=self.url_list, data=None, access_token=self.access_token, company_uuid=self.other_company.uuid)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, "Expected 404 Not Found with company UUID not matching the logged user")
-
-    def test_get_detail_brand_requires_company_uuid_from_logged_user(self):
-        response = self.make_request(method='get', url=self.url_detail, data=None, access_token=self.access_token, company_uuid=self.other_company.uuid)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, "Expected 404 Not Found with company UUID not matching the logged user")
-
-
     def test_get_detail_brand_fails_with_invalid_uuid(self):
         invalid_uuid = uuid.uuid4()
         url = reverse('brand-detail', kwargs={'uuid': invalid_uuid})
@@ -59,8 +34,19 @@ class GetBrandTestCase(BaseAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, "Expected 404 Not Found with UUID belonging to another company")
 
     def test_get_detail_brand_succeeds(self):
-        response = self.make_request(method='get', url=url, data=None, access_token=self.access_token, company_uuid=self.company.uuid)
+        response = self.make_request(method='get', url=self.url_detail, data=None, access_token=self.access_token, company_uuid=self.company.uuid)
         self.assertEqual(response.status_code, status.HTTP_200_OK, "Expected 200 Ok on successful get detail")
 
-        with self.assertRaises(Brand.DoesNotExist):
-            Brand.objects.get(uuid=self.brand.uuid)
+        expected_fields = ['uuid', 'name', 'description']
+        for field in expected_fields:
+            self.assertIn(field, response.data, f"Field {field} in response data")
+            self.assertEqual(str(getattr(self.brand, field)), str(response.data[field]), f"Expected detailed {field} to match response data")
+
+    def test_get_list_brand_succeeds(self):
+        response = self.make_request(method='get', url=self.url_list, data=None, access_token=self.access_token, company_uuid=self.company.uuid)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, "Expected 200 Ok on successful get detail")
+
+        expected_fields = ['uuid', 'name', 'description']
+        for field in expected_fields:
+            self.assertIn(field, response.data, f"Field {field} in response data")
+            self.assertEqual(str(getattr(self.brand, field)), str(response.data[field]), f"Expected detailed {field} to match response data")

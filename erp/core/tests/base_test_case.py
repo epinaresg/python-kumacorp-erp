@@ -28,7 +28,7 @@ class BaseAPITestCase(APITestCase):
 
 
     def get_brand_data(self):
-        return {'name': self.fake.word()}
+        return {'name': self.fake.word(), "description": self.fake.paragraph()}
 
     def create_brand(self, *, company):
         return Brand.objects.create(company=company, **self.get_brand_data())

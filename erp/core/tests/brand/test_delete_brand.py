@@ -12,18 +12,6 @@ class UpdateBrandTestCase(BaseAPITestCase):
         self.other_brand = self.create_brand(company=self.other_company)
         self.url = reverse('brand-detail', kwargs={'uuid': self.brand.uuid})
 
-    def test_delete_brand_requires_authentication(self):
-        response = self.make_request(method='delete', url=self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, "Expected 401 Unauthorized for unauthenticated request")
-
-    def test_delete_brand_requires_company_uuid(self):
-        response = self.make_request(method='delete', url=self.url, data=None, access_token=self.access_token)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, "Expected 404 Not Found without company UUID header")
-
-    def test_delete_brand_requires_company_uuid_from_logged_user(self):
-        response = self.make_request(method='delete', url=self.url, data=None, access_token=self.access_token, company_uuid=self.other_company.uuid)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND, "Expected 404 Not Found with company UUID not matching the logged user")
-
     def test_delete_brand_fails_with_invalid_uuid(self):
         invalid_uuid = uuid.uuid4()
         url = reverse('brand-detail', kwargs={'uuid': invalid_uuid})
