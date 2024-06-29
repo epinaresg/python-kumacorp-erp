@@ -25,8 +25,16 @@ class DefaultTestCase(AuthenticationApiTestCase, CRUDApiTestCase):
         self._execute_authentication_tests()
         self._execute_crud_tests()
 
+    def _generate_instance_data(self):
+        return {
+            "name": self.fake.unique.word(),
+            "abbreviation": self.fake.word()[:5].upper(),
+        }
+
+    ###### BEGIN - Abstracts methods for CRUDApiTestCase ######
+
     def _get_instance_data(self):
-        return {"name": self.fake.word(), "abbreviation": self.fake.word()[:5].upper()}
+        return self._generate_instance_data()
 
     def _create_instance(self, *, company):
         return UnitOfMeasure.objects.create(
@@ -51,15 +59,6 @@ class DefaultTestCase(AuthenticationApiTestCase, CRUDApiTestCase):
             instance = self._create_instance(company=self.company)
         return reverse("unitofmeasure-detail", kwargs={"uuid": instance.uuid})
 
-    def _get_requests(self):
-        return [
-            ("post", self._generate_create_url(), self._get_instance_data()),
-            ("put", self._generate_update_url(), self._get_instance_data()),
-            ("delete", self._generate_delete_url(), None),
-            ("get", self._generate_detail_url(), None),
-            ("get", self._generate_list_url(), None),
-        ]
-
     def _generate_list_url(self):
         return reverse("unitofmeasure-list")
 
@@ -71,3 +70,19 @@ class DefaultTestCase(AuthenticationApiTestCase, CRUDApiTestCase):
 
     def _get_expected_fields(self):
         return self.expected_fields
+
+    ###### END - Abstracts methods for CRUDApiTestCase ######
+
+    ###### BEGIN - Abstracts methods for AuthenticationApiTestCase ######
+
+    def _get_requests(self):
+
+        return [
+            ("post", self._generate_create_url(), self._generate_instance_data()),
+            ("put", self._generate_update_url(), self._generate_instance_data()),
+            ("delete", self._generate_delete_url(), None),
+            ("get", self._generate_detail_url(), None),
+            ("get", self._generate_list_url(), None),
+        ]
+
+    ###### END - Abstracts methods for AuthenticationApiTestCase ######

@@ -3,6 +3,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from itertools import product as itertools_product
 from rest_framework.exceptions import ValidationError
+from rest_framework import serializers
 
 from core.models import (
     Brand,
@@ -59,7 +60,7 @@ class CompanyService:
         validated_data = serializer.validated_data
 
         if Company.objects.filter(user=user).exists():
-            raise serializer.ValidationError(
+            raise serializers.ValidationError(
                 "Este usuario ya tiene asignada una compañía."
             )
 
@@ -80,7 +81,7 @@ class CategoryService:
         parent_uuid = validated_data.pop("parent_uuid", None)
         parent = UtilService.validate_uuid(uuid=parent_uuid, model_class=Category)
         if parent and parent.parent:
-            raise serializer.ValidationError(
+            raise serializers.ValidationError(
                 "Una categoría no puede tener más de un nivel de padres."
             )
 

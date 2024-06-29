@@ -1,9 +1,10 @@
 from core.tests.base_api_test_case import BaseAPITestCase
 
 
+from rest_framework.test import APITestCase
+
+
 class RequestAPITestCase(BaseAPITestCase):
-    def setUp(self):
-        super().setUp()
 
     def _make_request(
         self, *, method, url, data=None, access_token=None, company_uuid=None

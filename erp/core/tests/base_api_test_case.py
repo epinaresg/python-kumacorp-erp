@@ -9,7 +9,7 @@ from core.models import Company
 
 class BaseAPITestCase(APITestCase):
     def setUp(self):
-        super().setUpClass()
+        super().setUp()
         self.fake = Faker("es_ES")
         self.logger = logging.getLogger("django.test")
 
