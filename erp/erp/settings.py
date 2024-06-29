@@ -9,12 +9,14 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+
+from pathlib import Path
+from datetime import timedelta
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
-from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,9 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     "django_extensions",
-
     "authentication",
     "core",
 ]
@@ -82,21 +82,21 @@ WSGI_APPLICATION = "erp.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-#DATABASES = {
+# DATABASES = {
 #    "default": {
 #        "ENGINE": "django.db.backends.sqlite3",
 #        "NAME": BASE_DIR / "db.sqlite3",
 #    }
-#}
+# }
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
     }
 }
 
@@ -143,40 +143,39 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Configuración de JWT
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 }
 
-from datetime import timedelta
 
 SIMPLE_JWT = {
     #'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = 'media/'
+MEDIA_URL = "/media/"
+MEDIA_ROOT = "media/"
 
-AUTH_USER_MODEL = 'authentication.CustomUser'
+AUTH_USER_MODEL = "authentication.CustomUser"
 
-AUTHENTICATION_BACKENDS = ['authentication.backend.EmailBackend']
+AUTHENTICATION_BACKENDS = ["authentication.backend.EmailBackend"]
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'INFO',  # Asegúrate que el nivel sea INFO o más bajo para mostrar INFO logs
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "level": "INFO",  # Asegúrate que el nivel sea INFO o más bajo para mostrar INFO logs
+            "class": "logging.StreamHandler",
         },
     },
-    'loggers': {
-        'django.test': {
-            'handlers': ['console'],
-            'level': 'INFO',  # Asegúrate que el nivel sea INFO o más bajo para mostrar INFO logs
-            'propagate': True,
+    "loggers": {
+        "django.test": {
+            "handlers": ["console"],
+            "level": "INFO",  # Asegúrate que el nivel sea INFO o más bajo para mostrar INFO logs
+            "propagate": True,
         },
     },
 }
