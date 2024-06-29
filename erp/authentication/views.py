@@ -9,18 +9,19 @@ from authentication.serializers import UserSerializer, TokenObtainPairSerializer
 
 
 class RegisterView(APIView):
-    http_method_names = ['post']
+    http_method_names = ["post"]
 
     def post(self, *args, **kwargs):
         serializer = UserSerializer(data=self.request.data)
         if serializer.is_valid():
             get_user_model().objects.create_user(**serializer.validated_data)
             return Response(status=HTTP_201_CREATED)
-        return Response(status=HTTP_400_BAD_REQUEST, data={'errors': serializer.errors})
+        return Response(status=HTTP_400_BAD_REQUEST, data={"errors": serializer.errors})
 
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
+
 
 class UserDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
