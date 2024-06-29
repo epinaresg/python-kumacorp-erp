@@ -162,3 +162,21 @@ MEDIA_ROOT = 'media/'
 AUTH_USER_MODEL = 'authentication.CustomUser'
 
 AUTHENTICATION_BACKENDS = ['authentication.backend.EmailBackend']
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'INFO',  # Asegúrate que el nivel sea INFO o más bajo para mostrar INFO logs
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.test': {
+            'handlers': ['console'],
+            'level': 'INFO',  # Asegúrate que el nivel sea INFO o más bajo para mostrar INFO logs
+            'propagate': True,
+        },
+    },
+}
