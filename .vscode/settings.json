@@ -13,4 +13,8 @@
     },
   },
   "terminal.integrated.defaultProfile.linux": "fishProfile",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true
+  }
 }
