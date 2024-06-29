@@ -9,6 +9,7 @@ django-filter==24.2
 django-soft-delete==1.0.13
 djangorestframework==3.15.1
 djangorestframework-simplejwt==5.3.1
+Faker==26.0.0
 filelock==3.15.4
 idna==3.7
 jsonlines==4.0.0
@@ -16,6 +17,7 @@ pillow==10.3.0
 platformdirs==4.2.2
 psycopg2-binary==2.9.9
 PyJWT==2.8.0
+python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 PyYAML==6.0.1
 requests==2.32.3
