@@ -2,9 +2,9 @@ import math
 import random
 from abc import ABC, abstractmethod
 from rest_framework import status
-from core.tests.request_api_test_case import RequestAPITestCase
+from core.tests.base_api_test_case import BaseAPITestCase
 
-class CRUDApiTestCase(RequestAPITestCase, ABC):
+class CRUDApiTestCase(BaseAPITestCase, ABC):
     def setUp(self):
         super().setUp()
 
@@ -50,39 +50,25 @@ class CRUDApiTestCase(RequestAPITestCase, ABC):
 
     def _execute_crud_tests(self):
         self._test_create_fails_without_field()
-        self.logger.info('=== _test_create_fails_without_field - passed')
         self._test_create_fails_with_blank_field()
-        self.logger.info('=== _test_create_fails_with_blank_field - passed')
         self._test_create_succeeds_with_valid_data()
-        self.logger.info('=== _test_create_succeeds_with_valid_data - passed')
 
 
         self._test_update_fails_without_field()
-        self.logger.info('=== _test_update_fails_without_field - passed')
         self._test_update_fails_with_blank_field()
-        self.logger.info('=== _test_update_fails_with_blank_field - passed')
         self._test_update_fails_with_invalid_uuid()
-        self.logger.info('=== _test_update_fails_with_invalid_uuid - passed')
         self._test_update_fails_with_valid_uuid_from_another_company()
-        self.logger.info('=== _test_update_fails_with_valid_uuid_from_another_company - passed')
         self._test_update_succeeds_with_valid_data()
-        self.logger.info('=== _test_update_succeeds_with_valid_data - passed')
 
 
         self._test_delete_fails_with_invalid_uuid()
-        self.logger.info('=== _test_delete_fails_with_invalid_uuid - passed')
         self._test_delete_fails_with_valid_uuid_from_another_company()
-        self.logger.info('=== _test_delete_fails_with_valid_uuid_from_another_company - passed')
         self._test_delete_succeeds()
-        self.logger.info('=== _test_delete_succeeds - passed')
 
 
         self._test_get_detail_fails_with_invalid_uuid()
-        self.logger.info('=== _test_get_detail_fails_with_invalid_uuid - passed')
         self._test_get_detail_fails_with_valid_uuid_from_another_company()
-        self.logger.info('=== _test_get_detail_fails_with_valid_uuid_from_another_company - passed')
         self._test_get_detail_succeeds()
-        self.logger.info('=== _test_get_detail_succeeds - passed')
 
     def _test_field_validation(self, *, method, field, value):
         data = self._get_instance_data().copy()

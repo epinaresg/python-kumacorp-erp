@@ -22,10 +22,11 @@ class DefaultTestCase(AuthenticationApiTestCase, CRUDApiTestCase):
     def _generate_instance_data(self):
         return {
             "name": self.fake.unique.word(),
-            "abbreviation": self.fake.word()[:5].upper(),
+            "description": self.fake.paragraph(),
         }
 
-    # Métodos abstractos requeridos por CRUDApiTestCase
+    ###### BEGIN - Abstracts methods for CRUDApiTestCase ######
+
     def _get_instance_data(self):
         return {"name": self.fake.unique.word(), "description": self.fake.paragraph()}
 
@@ -62,7 +63,10 @@ class DefaultTestCase(AuthenticationApiTestCase, CRUDApiTestCase):
     def _get_expected_fields(self):
         return self.expected_fields
 
-    # Implementación del método abstracto de AuthenticationApiTestCase
+    ###### END - Abstracts methods for CRUDApiTestCase ######
+
+    ###### BEGIN - Abstracts methods for AuthenticationApiTestCase ######
+
     def _get_requests(self):
         return [
             ("post", self._generate_create_url(), self._generate_instance_data()),
@@ -71,3 +75,5 @@ class DefaultTestCase(AuthenticationApiTestCase, CRUDApiTestCase):
             ("get", self._generate_detail_url(), None),
             ("get", self._generate_list_url(), None),
         ]
+
+    ###### END - Abstracts methods for AuthenticationApiTestCase ######

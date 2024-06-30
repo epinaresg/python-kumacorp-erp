@@ -1,8 +1,7 @@
 from rest_framework import status
 from rest_framework.reverse import reverse
-from authentication.models import CustomUser
 from core.models import Company
-from core.tests.base_test_case import BaseAPITestCase
+from core.tests.base_api_test_case import BaseAPITestCase
 
 
 class UpdateCompanyTestCase(BaseAPITestCase):

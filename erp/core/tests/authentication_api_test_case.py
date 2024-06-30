@@ -1,9 +1,9 @@
 from rest_framework import status
-from core.tests.request_api_test_case import RequestAPITestCase
+from core.tests.base_api_test_case import BaseAPITestCase
 from abc import ABC, abstractmethod
 
 
-class AuthenticationApiTestCase(RequestAPITestCase, ABC):
+class AuthenticationApiTestCase(BaseAPITestCase, ABC):
     def setUp(self):
         super().setUp()
 
@@ -13,13 +13,10 @@ class AuthenticationApiTestCase(RequestAPITestCase, ABC):
 
     def _execute_authentication_tests(self):
         self._test_requires_authentication()
-        self.logger.info("=== _test_requires_authentication - passed")
 
         self._test_requires_company_uuid()
-        self.logger.info("=== _test_requires_company_uuid - passed")
 
         self._test_requires_company_uuid_from_logged_user()
-        self.logger.info("=== _test_requires_company_uuid_from_logged_user - passed")
 
     def _test_requires_authentication(self):
         for method, url, data in self._get_requests():
